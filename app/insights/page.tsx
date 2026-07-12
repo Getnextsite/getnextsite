@@ -15,9 +15,6 @@ export const metadata: Metadata = {
     "Playbooks, deep dives, and field notes from the GetNextSite team on websites, apps, AI automation, and digital marketing.",
   alternates: {
     canonical: `${siteConfig.url}/insights`,
-    types: {
-      "application/rss+xml": `${siteConfig.url}/insights/rss.xml`,
-    },
   },
 };
 

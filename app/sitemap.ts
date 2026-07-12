@@ -6,6 +6,8 @@ import { industries } from "@/data/industries";
 import { posts } from "@/data/insights";
 import { competitors } from "@/data/competitors";
 
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.url;
   const now = new Date();

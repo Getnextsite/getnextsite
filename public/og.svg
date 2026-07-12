@@ -1,0 +1,58 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1120"/>
+      <stop offset="0.5" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="0.5" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.6" stop-color="#c4b5fd"/>
+      <stop offset="1" stop-color="#67e8f9"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="0.2" cy="0.15" r="0.5">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.85" cy="0.85" r="0.5">
+      <stop offset="0" stop-color="#a855f7" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <g transform="translate(72,72)">
+    <rect width="56" height="56" rx="14" fill="url(#mark)"/>
+    <text x="28" y="40" text-anchor="middle" font-family="system-ui,sans-serif" font-size="32" font-weight="800" fill="#ffffff">N</text>
+    <text x="80" y="38" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#ffffff">GetNextSite Agency</text>
+  </g>
+
+  <text x="72" y="360" font-family="system-ui,sans-serif" font-size="80" font-weight="800" fill="#ffffff" letter-spacing="-2">Building the Future of</text>
+  <text x="72" y="450" font-family="system-ui,sans-serif" font-size="80" font-weight="800" fill="url(#title)" letter-spacing="-2">Your Business Online.</text>
+
+  <g transform="translate(72,510)" font-family="system-ui,sans-serif" font-size="22" font-weight="500" fill="#ffffff">
+    <g>
+      <rect width="150" height="44" rx="22" fill="rgba(255,255,255,0.09)" stroke="rgba(255,255,255,0.18)"/>
+      <text x="75" y="30" text-anchor="middle">Websites</text>
+    </g>
+    <g transform="translate(168,0)">
+      <rect width="170" height="44" rx="22" fill="rgba(255,255,255,0.09)" stroke="rgba(255,255,255,0.18)"/>
+      <text x="85" y="30" text-anchor="middle">Mobile Apps</text>
+    </g>
+    <g transform="translate(356,0)">
+      <rect width="80" height="44" rx="22" fill="rgba(255,255,255,0.09)" stroke="rgba(255,255,255,0.18)"/>
+      <text x="40" y="30" text-anchor="middle">AI</text>
+    </g>
+    <g transform="translate(454,0)">
+      <rect width="160" height="44" rx="22" fill="rgba(255,255,255,0.09)" stroke="rgba(255,255,255,0.18)"/>
+      <text x="80" y="30" text-anchor="middle">Marketing</text>
+    </g>
+  </g>
+</svg>

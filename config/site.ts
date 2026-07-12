@@ -6,7 +6,7 @@ export const siteConfig = {
     "GetNextSite Agency helps businesses launch, modernize, automate, and scale their digital presence — professional website development, mobile apps, AI business automation, digital marketing, branding, hosting, and long-term maintenance.",
   url:
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://nextsite-agency.vercel.app",
-  ogImage: "/og.png",
+  ogImage: "/og.svg",
   keywords: [
     "professional website development",
     "mobile app development",
