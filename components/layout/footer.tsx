@@ -3,6 +3,7 @@ import { Github, Instagram, Linkedin, Twitter, Facebook } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { Logo } from "@/components/ui/logo";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
+import { CookiePreferencesButton } from "@/components/layout/cookie-preferences-button";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -69,17 +70,64 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row">
+        <div className="mt-10 rounded-2xl border border-border/60 bg-muted/20 p-4 text-xs text-muted-foreground">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                Business
+              </div>
+              <div className="mt-1 font-medium text-foreground">
+                {siteConfig.business.legalName}
+              </div>
+              <div>{siteConfig.business.jurisdiction}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                Registered address
+              </div>
+              <div className="mt-1">{siteConfig.business.address}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                Registration
+              </div>
+              <div className="mt-1">
+                Reg. no. {siteConfig.business.registrationNumber}
+              </div>
+              <div>Tax ID: {siteConfig.business.taxId}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                Contact
+              </div>
+              <div className="mt-1">
+                <a
+                  href={`mailto:${siteConfig.contact.email}`}
+                  className="hover:text-foreground"
+                >
+                  {siteConfig.contact.email}
+                </a>
+              </div>
+              <div>{siteConfig.contact.hours}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row">
           <p>
             © {year} {siteConfig.name}. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/privacy-policy" className="hover:text-foreground">
               Privacy
             </Link>
             <Link href="/terms" className="hover:text-foreground">
               Terms
             </Link>
+            <Link href="/cookie-policy" className="hover:text-foreground">
+              Cookies
+            </Link>
+            <CookiePreferencesButton />
             <a
               href={`mailto:${siteConfig.contact.email}`}
               className="hover:text-foreground"

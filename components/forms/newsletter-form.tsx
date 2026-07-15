@@ -18,6 +18,12 @@ export function NewsletterForm() {
     setState("submitting");
     const data = new FormData(e.currentTarget);
     const email = String(data.get("email") ?? "");
+    const website = String(data.get("website") ?? "");
+    // Honeypot: real users won't fill this hidden field.
+    if (website) {
+      setState("done");
+      return;
+    }
     const result = await subscribeNewsletter({ email });
     if (result.ok) {
       setState("done");
@@ -44,6 +50,20 @@ export function NewsletterForm() {
         </div>
       ) : (
         <>
+          <input
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: "-9999px",
+              width: "1px",
+              height: "1px",
+              overflow: "hidden",
+            }}
+          />
           <Input
             type="email"
             required

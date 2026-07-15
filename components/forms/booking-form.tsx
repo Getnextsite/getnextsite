@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { consultationSchema, type ConsultationInput } from "@/schemas";
 import { submitConsultation } from "@/actions/contact";
+import { Honeypot } from "@/components/forms/honeypot";
+import { ConsentCheckbox } from "@/components/forms/consent-checkbox";
 
 const goalOptions = [
   "New website",
@@ -30,7 +32,7 @@ export function BookingForm() {
     formState: { errors, isSubmitting },
   } = useForm<ConsultationInput>({
     resolver: zodResolver(consultationSchema),
-    defaultValues: { goals: [] },
+    defaultValues: { goals: [], consent: false, website: "" },
   });
   const selectedGoals = watch("goals") ?? [];
   const [state, setState] = React.useState<"idle" | "success" | "error">(
@@ -172,6 +174,13 @@ export function BookingForm() {
                 {...register("message")}
               />
             </div>
+
+            <Honeypot register={register("website")} />
+            <ConsentCheckbox
+              register={register("consent")}
+              error={errors.consent?.message}
+              id="booking-consent"
+            />
 
             {state === "error" && (
               <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">

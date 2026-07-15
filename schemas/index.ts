@@ -14,6 +14,7 @@ export const contactSchema = z.object({
   consent: z
     .boolean()
     .refine((v) => v === true, "Please accept the privacy policy."),
+  website: z.string().max(0).optional(),
 });
 export type ContactInput = z.infer<typeof contactSchema>;
 
@@ -26,6 +27,11 @@ export const invoiceSchema = z.object({
   plan: z.enum(["monthly", "annual"]).default("monthly"),
   budget: z.string().optional(),
   description: z.string().min(10).max(4000),
+  consent: z
+    .boolean()
+    .refine((v) => v === true, "Please accept the privacy policy."),
+  // Honeypot — must be empty. Real users never fill it (it's hidden).
+  website: z.string().max(0).optional(),
 });
 export type InvoiceInput = z.infer<typeof invoiceSchema>;
 
@@ -37,10 +43,15 @@ export const consultationSchema = z.object({
   goals: z.array(z.string()).default([]),
   preferredDate: z.string().optional(),
   message: z.string().max(2000).optional(),
+  consent: z
+    .boolean()
+    .refine((v) => v === true, "Please accept the privacy policy."),
+  website: z.string().max(0).optional(),
 });
 export type ConsultationInput = z.infer<typeof consultationSchema>;
 
 export const newsletterSchema = z.object({
   email: z.string().email(),
+  website: z.string().max(0).optional(),
 });
 export type NewsletterInput = z.infer<typeof newsletterSchema>;

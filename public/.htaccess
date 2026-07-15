@@ -3,25 +3,24 @@
 Options -MultiViews
 RewriteEngine On
 
-# HTTPS canonical (Hostinger already terminates SSL — this forces http -> https)
+# HTTPS canonical (Hostinger terminates SSL — force http -> https)
 RewriteCond %{HTTPS} off
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
-# Serve pretty URLs from /path/index.html
+# Pretty URLs — serve /path/index.html
 DirectoryIndex index.html
 
-# If /pricing is requested and /pricing/index.html exists, serve it
+# If /pricing (no slash) → /pricing/index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME}.html -f
 RewriteRule ^(.*)$ $1.html [L]
 
-# If /pricing (no slash) → /pricing/index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME}/index.html -f
 RewriteRule ^(.*)$ $1/index.html [L]
 
-# Custom 404 (Next.js exports it as 404.html)
+# Custom 404 (Next.js exports 404.html)
 ErrorDocument 404 /404.html
 
 # --- Compression ---
@@ -36,7 +35,6 @@ ErrorDocument 404 /404.html
   ExpiresActive On
   ExpiresDefault "access plus 1 hour"
 
-  # Long-cache all hashed static assets
   ExpiresByType application/javascript "access plus 1 year"
   ExpiresByType text/javascript "access plus 1 year"
   ExpiresByType text/css "access plus 1 year"
@@ -49,7 +47,6 @@ ErrorDocument 404 /404.html
   ExpiresByType application/font-woff2 "access plus 1 year"
   ExpiresByType font/woff2 "access plus 1 year"
 
-  # HTML — short cache so updates propagate
   ExpiresByType text/html "access plus 5 minutes"
 </IfModule>
 
@@ -61,11 +58,35 @@ ErrorDocument 404 /404.html
     Header set Cache-Control "public, max-age=300, must-revalidate"
   </FilesMatch>
 
-  # --- Security headers ---
+  # --- Security headers (aim: A+ on securityheaders.com) ---
+
+  # HSTS — commit to HTTPS for 6 months, include subdomains, allow preload.
+  # Only enable AFTER you confirm HTTPS works on every subdomain.
+  Header always set Strict-Transport-Security "max-age=15552000; includeSubDomains; preload"
+
+  # Content-Security-Policy — locks XSS surface.
+  # Adjust the connect-src / frame-src whitelist if you add:
+  #   - Formspree endpoint (add https://formspree.io)
+  #   - Analytics (Plausible: https://plausible.io ; GA: https://www.google-analytics.com)
+  #   - Google Maps embed (already whitelisted below)
+  #   - Meta / LinkedIn pixels (add their origins)
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://avatars.githubusercontent.com; connect-src 'self' https://formspree.io; frame-src 'self' https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-ancestors 'self'; upgrade-insecure-requests"
+
+  # Basic hardening
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
-  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+  # Feature/permissions lockdown (deny everything we don't use)
+  Header set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), xr-spatial-tracking=()"
+
+  # Cross-origin isolation (safe defaults for a marketing site)
+  Header set Cross-Origin-Opener-Policy "same-origin"
+  Header set Cross-Origin-Resource-Policy "same-site"
+
+  # Hide server banner
+  Header unset X-Powered-By
+  Header unset Server
 </IfModule>
 
 # Deny access to source/dev files if anything sneaks in

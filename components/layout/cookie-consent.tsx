@@ -96,10 +96,17 @@ export function CookieConsent() {
                       improve the product. Marketing helps us reach the right
                       audience. Choose what you're comfortable with.{" "}
                       <Link
+                        href="/cookie-policy"
+                        className="text-primary hover:underline"
+                      >
+                        Cookie policy
+                      </Link>
+                      {" · "}
+                      <Link
                         href="/privacy-policy"
                         className="text-primary hover:underline"
                       >
-                        Privacy policy
+                        Privacy
                       </Link>
                       .
                     </p>

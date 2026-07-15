@@ -107,6 +107,54 @@ export default function ContactPage() {
                     </Button>
                   </InvoiceRequestTrigger>
                 </div>
+
+                <div className="rounded-2xl border border-border/70 bg-card/70 p-6 backdrop-blur">
+                  <h3 className="font-display text-sm font-semibold">
+                    Business identity
+                  </h3>
+                  <dl className="mt-3 space-y-2 text-xs">
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Legal name
+                      </dt>
+                      <dd className="mt-0.5 font-medium">
+                        {siteConfig.business.legalName}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Registered in
+                      </dt>
+                      <dd className="mt-0.5">
+                        {siteConfig.business.jurisdiction}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Registration number
+                      </dt>
+                      <dd className="mt-0.5">
+                        {siteConfig.business.registrationNumber}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Tax ID
+                      </dt>
+                      <dd className="mt-0.5">{siteConfig.business.taxId}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Registered address
+                      </dt>
+                      <dd className="mt-0.5">{siteConfig.business.address}</dd>
+                    </div>
+                  </dl>
+                  <p className="mt-4 text-[11px] text-muted-foreground">
+                    Payments are processed by Stripe or PayPal via emailed
+                    invoice links — never on this website.
+                  </p>
+                </div>
               </div>
             </aside>
           </div>

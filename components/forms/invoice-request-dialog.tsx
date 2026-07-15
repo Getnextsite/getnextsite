@@ -27,6 +27,8 @@ import {
 import { invoiceSchema, type InvoiceInput } from "@/schemas";
 import { submitInvoiceRequest } from "@/actions/contact";
 import { addons } from "@/data/pricing";
+import { Honeypot } from "@/components/forms/honeypot";
+import { ConsentCheckbox } from "@/components/forms/consent-checkbox";
 
 export function InvoiceRequestTrigger({
   children,
@@ -57,6 +59,8 @@ function InvoiceForm({ defaultSelected }: { defaultSelected: string[] }) {
     defaultValues: {
       plan: "monthly",
       services: defaultSelected,
+      consent: false,
+      website: "",
     },
   });
 
@@ -225,6 +229,13 @@ function InvoiceForm({ defaultSelected }: { defaultSelected: string[] }) {
                 {...register("description")}
               />
             </Field>
+
+            <Honeypot register={register("website")} />
+            <ConsentCheckbox
+              register={register("consent")}
+              error={errors.consent?.message}
+              id="invoice-consent"
+            />
 
             {state === "error" && (
               <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">

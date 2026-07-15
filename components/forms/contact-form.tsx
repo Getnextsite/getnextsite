@@ -19,6 +19,7 @@ import {
 import { contactSchema, type ContactInput } from "@/schemas";
 import { submitContact } from "@/actions/contact";
 import { services } from "@/data/services";
+import { Honeypot } from "@/components/forms/honeypot";
 
 export function ContactForm() {
   const {
@@ -28,7 +29,7 @@ export function ContactForm() {
     formState: { errors, isSubmitting },
   } = useForm<ContactInput>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { consent: false },
+    defaultValues: { consent: false, website: "" },
   });
 
   const [state, setState] = React.useState<"idle" | "success" | "error">(
@@ -168,6 +169,8 @@ export function ContactForm() {
                 </p>
               )}
             </div>
+
+            <Honeypot register={register("website")} />
 
             <label className="flex items-start gap-2 text-xs text-muted-foreground">
               <input

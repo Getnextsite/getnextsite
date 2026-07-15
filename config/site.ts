@@ -22,10 +22,22 @@ export const siteConfig = {
   creator: "GetNextSite Agency",
   contact: {
     email: "hello@nextsite-agency.com",
+    privacyEmail: "privacy@nextsite-agency.com",
+    legalEmail: "legal@nextsite-agency.com",
+    abuseEmail: "abuse@nextsite-agency.com",
     phone: "+1 (555) 010-2030",
     whatsapp: "+15550102030",
     address: "1 Market Street, Suite 400, San Francisco, CA 94103",
     hours: "Mon–Fri · 9:00 – 18:00 (PT)",
+  },
+  // Business info displayed for legal / trust transparency.
+  // Replace placeholders with your real, published business details.
+  business: {
+    legalName: "[Legal Business Name]",
+    registrationNumber: "[Company registration number]",
+    taxId: "[VAT / Tax ID]",
+    jurisdiction: "[jurisdiction — e.g. United Kingdom, Delaware USA]",
+    address: "[Registered address, city, country]",
   },
   social: {
     twitter: "https://twitter.com/nextsiteagency",
@@ -73,7 +85,14 @@ export const siteConfig = {
     ],
     Legal: [
       { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Cookie Policy", href: "/cookie-policy" },
       { label: "Terms of Service", href: "/terms" },
+      { label: "Service Agreement", href: "/service-agreement" },
+      { label: "Refund & Cancellation", href: "/refund-policy" },
+      { label: "Acceptable Use", href: "/acceptable-use" },
+      { label: "Disclaimer", href: "/disclaimer" },
+      { label: "GDPR / Data Protection", href: "/gdpr" },
+      { label: "How We Work", href: "/how-we-work" },
     ],
   },
 };
