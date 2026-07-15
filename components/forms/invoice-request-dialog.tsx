@@ -1,10 +1,18 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, FileText, Sparkles } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,11 +32,10 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { invoiceSchema, type InvoiceInput } from "@/schemas";
-import { submitInvoiceRequest } from "@/actions/contact";
-import { addons } from "@/data/pricing";
-import { Honeypot } from "@/components/forms/honeypot";
-import { ConsentCheckbox } from "@/components/forms/consent-checkbox";
+import { orderSchema, type OrderInput } from "@/lib/validations/order";
+import { addons, basePlan } from "@/data/pricing";
+import { formatCurrency } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 
 export function InvoiceRequestTrigger({
   children,
@@ -41,64 +48,122 @@ export function InvoiceRequestTrigger({
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-2xl">
-        <InvoiceForm defaultSelected={selected} />
+        <OrderForm defaultSelected={selected} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function InvoiceForm({ defaultSelected }: { defaultSelected: string[] }) {
+function OrderForm({ defaultSelected }: { defaultSelected: string[] }) {
+  const [servicesPicked, setServicesPicked] =
+    React.useState<string[]>(defaultSelected);
+  const [billing, setBilling] = React.useState<"monthly" | "annual">("monthly");
+  const [budget, setBudget] = React.useState<string>("");
+  const [consent, setConsent] = React.useState(false);
+  const [consentError, setConsentError] = React.useState<string | undefined>();
+  const [status, setStatus] = React.useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
+
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<InvoiceInput>({
-    resolver: zodResolver(invoiceSchema),
+    formState: { errors },
+  } = useForm<OrderInput>({
+    resolver: zodResolver(orderSchema),
     defaultValues: {
-      plan: "monthly",
-      services: defaultSelected,
-      consent: false,
+      name: "",
+      email: "",
+      phone: "",
+      plan: "",
+      message: "",
       website: "",
     },
   });
 
-  const [state, setState] = React.useState<"idle" | "success" | "error">(
-    "idle",
-  );
-  const [msg, setMsg] = React.useState<string>("");
+  // Compute a readable plan/price string from the current selection.
+  const planString = React.useMemo(() => {
+    const chosen = addons.filter((a) => servicesPicked.includes(a.id));
+    const monthly =
+      basePlan.price + chosen.reduce((sum, a) => sum + a.monthly, 0);
+    const setup =
+      basePlan.setup + chosen.reduce((sum, a) => sum + a.setup, 0);
+    const displayed =
+      billing === "annual"
+        ? `${formatCurrency(Math.round(monthly * 12 * 0.85))}/yr`
+        : `${formatCurrency(monthly)}/mo`;
+    const items =
+      chosen.length > 0
+        ? chosen.map((a) => a.name).join(", ")
+        : "Foundation only";
+    const setupPart =
+      setup > 0 ? ` · setup ${formatCurrency(setup)}` : "";
+    return `${billing === "annual" ? "Annual" : "Monthly"} · ${displayed}${setupPart} · ${items}`;
+  }, [servicesPicked, billing]);
 
-  const selectedServices = watch("services") ?? [];
+  // Auto-inject the plan into the form as soon as it changes.
+  React.useEffect(() => {
+    setValue("plan", planString, { shouldValidate: false });
+  }, [planString, setValue]);
 
-  const toggleService = (id: string) => {
-    const next = selectedServices.includes(id)
-      ? selectedServices.filter((s) => s !== id)
-      : [...selectedServices, id];
-    setValue("services", next, { shouldDirty: true });
-  };
-
-  async function onSubmit(data: InvoiceInput) {
-    const result = await submitInvoiceRequest(data);
-    setMsg(result.message);
-    setState(result.ok ? "success" : "error");
+  function toggleService(id: string) {
+    setServicesPicked((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
   }
+
+  async function onSubmit(data: OrderInput) {
+    if (!consent) {
+      setConsentError("Please accept the privacy policy.");
+      return;
+    }
+    setConsentError(undefined);
+    setStatus("sending");
+
+    const enrichedMessage = [
+      data.message ?? "",
+      budget ? `Budget range: ${budget}` : "",
+    ]
+      .filter((s) => s && s.trim().length > 0)
+      .join("\n\n");
+
+    try {
+      const res = await fetch("/send-order.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, message: enrichedMessage }),
+      });
+      const json = (await res.json().catch(() => ({ success: false }))) as {
+        success?: boolean;
+      };
+      setStatus(json.success ? "success" : "error");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  const whatsappHref = `https://wa.me/${siteConfig.contact.whatsapp.replace(
+    /[^0-9]/g,
+    "",
+  )}`;
 
   return (
     <>
       <DialogHeader>
         <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          <Sparkles className="h-3 w-3" /> Instant invoice request
+          <Sparkles className="h-3 w-3" /> Order request
         </div>
         <DialogTitle className="text-2xl">Request your invoice</DialogTitle>
         <DialogDescription>
           Tell us what you need and we'll email a formal PDF invoice within 2
-          business hours.
+          business hours. Payments are handled outside this website via Stripe
+          or PayPal.
         </DialogDescription>
       </DialogHeader>
 
       <AnimatePresence mode="wait">
-        {state === "success" ? (
+        {status === "success" ? (
           <motion.div
             key="success"
             initial={{ opacity: 0, y: 12 }}
@@ -115,9 +180,52 @@ function InvoiceForm({ defaultSelected }: { defaultSelected: string[] }) {
               <CheckCircle2 className="h-7 w-7" />
             </motion.div>
             <h4 className="mt-4 font-display text-xl font-semibold">
-              Invoice request received
+              Merci ! We received your order
             </h4>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">{msg}</p>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
+              We'll reply within 24 hours. Need us faster? Ping us on WhatsApp.
+            </p>
+            <Button asChild variant="gradient" size="lg" className="mt-6">
+              <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+              </a>
+            </Button>
+          </motion.div>
+        ) : status === "error" ? (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center py-8 text-center"
+          >
+            <div className="grid h-14 w-14 place-items-center rounded-full bg-destructive/15 text-destructive">
+              <AlertCircle className="h-7 w-7" />
+            </div>
+            <h4 className="mt-4 font-display text-xl font-semibold">
+              Something went wrong
+            </h4>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
+              We couldn't deliver your message right now. Contact us on
+              WhatsApp — we'll take it from there.
+            </p>
+            <div className="mt-6 flex gap-2">
+              <Button asChild variant="gradient" size="lg">
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                </a>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setStatus("idle")}
+              >
+                Try again
+              </Button>
+            </div>
           </motion.div>
         ) : (
           <motion.form
@@ -128,63 +236,65 @@ function InvoiceForm({ defaultSelected }: { defaultSelected: string[] }) {
             animate={{ opacity: 1 }}
           >
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field
-                id="name"
-                label="Your name"
-                error={errors.name?.message}
-              >
-                <Input id="name" placeholder="Jane Doe" {...register("name")} />
-              </Field>
-              <Field id="company" label="Company">
+              <Field id="name" label="Your name" error={errors.name?.message}>
                 <Input
-                  id="company"
-                  placeholder="Company (optional)"
-                  {...register("company")}
+                  id="name"
+                  placeholder="Jane Doe"
+                  autoComplete="name"
+                  {...register("name")}
                 />
               </Field>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field
-                id="email"
-                label="Email"
-                error={errors.email?.message}
-              >
+              <Field id="email" label="Email" error={errors.email?.message}>
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@company.com"
+                  autoComplete="email"
                   {...register("email")}
-                />
-              </Field>
-              <Field id="phone" label="Phone">
-                <Input
-                  id="phone"
-                  placeholder="+1 555 555 0100"
-                  {...register("phone")}
                 />
               </Field>
             </div>
 
-            <Field id="plan" label="Preferred plan">
-              <Select
-                defaultValue="monthly"
-                onValueChange={(v) => setValue("plan", v as "monthly" | "annual")}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                id="phone"
+                label="Phone (optional)"
+                error={errors.phone?.message}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly subscription</SelectItem>
-                  <SelectItem value="annual">Annual (save 15%)</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+                <Input
+                  id="phone"
+                  placeholder="+1 555 555 0100"
+                  autoComplete="tel"
+                  {...register("phone")}
+                />
+              </Field>
+              <Field id="billing" label="Billing">
+                <Select
+                  value={billing}
+                  onValueChange={(v) =>
+                    setBilling(v as "monthly" | "annual")
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">
+                      Monthly subscription
+                    </SelectItem>
+                    <SelectItem value="annual">
+                      Annual (save 15%)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
 
             <div>
               <Label>Selected services</Label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {addons.map((a) => {
-                  const active = selectedServices.includes(a.id);
+                  const active = servicesPicked.includes(a.id);
                   return (
                     <button
                       type="button"
@@ -201,58 +311,113 @@ function InvoiceForm({ defaultSelected }: { defaultSelected: string[] }) {
                   );
                 })}
               </div>
+              <p className="mt-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                <span className="uppercase tracking-widest text-[10px]">
+                  Your plan
+                </span>
+                <br />
+                <span className="mt-1 block text-sm font-medium text-foreground">
+                  {planString}
+                </span>
+              </p>
+              {/* Hidden field — auto-populated via setValue */}
+              <input type="hidden" {...register("plan")} />
+              {errors.plan && (
+                <p className="mt-1 text-xs text-destructive">
+                  {errors.plan.message}
+                </p>
+              )}
             </div>
 
-            <Field id="budget" label="Estimated budget">
-              <Select onValueChange={(v) => setValue("budget", v)}>
+            <Field id="budget" label="Estimated budget (optional)">
+              <Select value={budget} onValueChange={setBudget}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a range" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lt-5k">Under $5,000</SelectItem>
-                  <SelectItem value="5-15k">$5,000 – $15,000</SelectItem>
-                  <SelectItem value="15-40k">$15,000 – $40,000</SelectItem>
-                  <SelectItem value="40k+">$40,000+</SelectItem>
+                  <SelectItem value="Under $5,000">Under $5,000</SelectItem>
+                  <SelectItem value="$5,000 – $15,000">
+                    $5,000 – $15,000
+                  </SelectItem>
+                  <SelectItem value="$15,000 – $40,000">
+                    $15,000 – $40,000
+                  </SelectItem>
+                  <SelectItem value="$40,000+">$40,000+</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
 
             <Field
-              id="description"
-              label="Project description"
-              error={errors.description?.message}
+              id="message"
+              label="Project description (optional)"
+              error={errors.message?.message}
             >
               <Textarea
-                id="description"
+                id="message"
                 rows={4}
                 placeholder="What are you launching, when, and what would 'great' look like?"
-                {...register("description")}
+                {...register("message")}
               />
             </Field>
 
-            <Honeypot register={register("website")} />
-            <ConsentCheckbox
-              register={register("consent")}
-              error={errors.consent?.message}
-              id="invoice-consent"
+            {/* Honeypot — hidden field, real users never fill it */}
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="hidden"
+              {...register("website")}
             />
 
-            {state === "error" && (
-              <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                {msg}
-              </div>
-            )}
+            <div>
+              <label
+                htmlFor="order-consent"
+                className="flex items-start gap-2 text-xs text-muted-foreground"
+              >
+                <input
+                  id="order-consent"
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-border"
+                />
+                <span>
+                  I agree that GetNextSite Agency may process my details to
+                  respond to this request, per the{" "}
+                  <Link
+                    href="/privacy-policy"
+                    className="text-primary underline"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
+              {consentError && (
+                <p className="mt-1 text-xs text-destructive">
+                  {consentError}
+                </p>
+              )}
+            </div>
 
-            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse items-start gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[11px] text-muted-foreground">
+                Payments processed by Stripe or PayPal — never on this site.
+              </p>
               <Button
                 type="submit"
                 variant="gradient"
                 size="lg"
                 className="w-full sm:w-auto"
-                disabled={isSubmitting}
+                disabled={status === "sending"}
               >
-                <FileText className="h-4 w-4" />
-                {isSubmitting ? "Sending…" : "Send Me an Invoice"}
+                {status === "sending" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
+                {status === "sending" ? "Sending…" : "Send Me an Invoice"}
               </Button>
             </div>
           </motion.form>
@@ -277,9 +442,7 @@ function Field({
     <div>
       <Label htmlFor={id}>{label}</Label>
       <div className="mt-1.5">{children}</div>
-      {error && (
-        <p className="mt-1 text-xs text-destructive">{error}</p>
-      )}
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   );
 }
